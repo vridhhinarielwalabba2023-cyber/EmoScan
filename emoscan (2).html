@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EmoScan — AI Emotion Recognition Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4ef;
+  --sidebar: #0f0f14;
+  --card: #ffffff;
+  --border: #e2e1db;
+  --accent: #ff4500;
+  --accent2: #0057ff;
+  --green: #00a86b;
+  --warn: #ff8c00;
+  --red: #e60026;
+  --text: #1a1a24;
+  --muted: #8a8a9a;
+  --tag-bg: #f0efe9;
+  --ff: 'IBM Plex Sans', sans-serif;
+  --fd: 'Syne', sans-serif;
+  --fm: 'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--ff);font-size:14px;overflow:hidden;height:100vh;display:flex;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:var(--sidebar);
+  display:flex;flex-direction:column;
+  height:100vh;
+  z-index:100;
+}
+.sb-logo{
+  padding:22px 20px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.sb-logo-text{
+  font-family:var(--fd);font-size:1.3rem;font-weight:800;
+  color:#fff;letter-spacing:-0.02em;
+}
+.sb-logo-text span{color:var(--accent);}
+.sb-tagline{font-size:0.6rem;color:rgba(255,255,255,0.3);letter-spacing:0.15em;margin-top:3px;font-family:var(--fm);}
+.sb-section{
+  padding:20px 12px 8px;
+  font-size:0.6rem;color:rgba(255,255,255,0.25);
+  letter-spacing:0.2em;font-family:var(--fm);
+  text-transform:uppercase;
+}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 16px;
+  cursor:pointer;
+  border-radius:0;
+  color:rgba(255,255,255,0.45);
+  font-size:0.82rem;font-weight:500;
+  transition:all 0.15s;
+  border-left:2px solid transparent;
+  margin:1px 0;
+}
+.sb-item:hover{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.05);}
+.sb-item.active{color:#fff;background:rgba(255,69,0,0.15);border-left-color:var(--accent);}
+.sb-item .ico{font-size:1rem;width:20px;text-align:center;}
+.sb-badge{
+  margin-left:auto;
+  background:var(--accent);color:#fff;
+  border-radius:10px;padding:1px 7px;
+  font-size:0.6rem;font-family:var(--fm);
+}
+.sb-status{
+  margin-top:auto;padding:16px;
+  border-top:1px solid rgba(255,255,255,0.07);
+}
+.sb-user{display:flex;align-items:center;gap:10px;}
+.sb-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#ff4500,#ff8c00);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:#fff;font-size:0.75rem;flex-shrink:0;
+}
+.sb-uname{font-size:0.8rem;color:#fff;font-weight:600;}
+.sb-urole{font-size:0.65rem;color:rgba(255,255,255,0.35);font-family:var(--fm);}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  padding:0 28px;
+  height:54px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.topbar-title{font-family:var(--fd);font-size:1.1rem;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.live-badge{
+  display:flex;align-items:center;gap:6px;
+  background:#fff0eb;border:1px solid #ffd0bc;
+  border-radius:20px;padding:4px 12px;
+  font-size:0.7rem;font-family:var(--fm);color:var(--accent);
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.tb-btn{
+  border:1px solid var(--border);background:#fff;
+  border-radius:6px;padding:6px 14px;
+  font-family:var(--ff);font-size:0.78rem;font-weight:500;
+  cursor:pointer;color:var(--text);transition:all 0.15s;
+}
+.tb-btn:hover{background:var(--bg);border-color:#ccc;}
+.tb-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.tb-btn.primary:hover{background:#e03d00;}
+
+.content{flex:1;overflow-y:auto;padding:24px 28px;}
+
+/* ── SCREENS ── */
+.screen{display:none;}
+.screen.active{display:block;animation:fadeUp 0.25s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── GRID HELPERS ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.card-sm{padding:16px;}
+.card-title{font-family:var(--fd);font-size:0.9rem;font-weight:700;margin-bottom:4px;}
+.card-sub{font-size:0.75rem;color:var(--muted);margin-bottom:16px;}
+.section-title{font-family:var(--fd);font-size:1rem;font-weight:700;margin-bottom:16px;}
+
+/* STAT CARDS */
+.stat-val{font-family:var(--fd);font-size:2rem;font-weight:800;line-height:1;}
+.stat-label{font-size:0.72rem;color:var(--muted);margin-top:4px;}
+.stat-delta{font-size:0.72rem;font-family:var(--fm);margin-top:8px;}
+.delta-up{color:var(--red);}
+.delta-ok{color:var(--green);}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:0.65rem;font-family:var(--fm);font-weight:500;}
+.badge-red{background:#ffe5e8;color:var(--red);}
+.badge-green{background:#e3f9ee;color:var(--green);}
+.badge-warn{background:#fff3e0;color:var(--warn);}
+.badge-blue{background:#e8f0ff;color:var(--accent2);}
+.badge-gray{background:var(--tag-bg);color:var(--muted);}
+
+/* ── SUBJECT CARDS (DASHBOARD) ── */
+.subject-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.subject-card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:18px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;
+}
+.subject-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+.subject-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+}
+.subject-card.red::after{background:var(--accent);}
+.subject-card.blue::after{background:var(--accent2);}
+.subject-card.green::after{background:var(--green);}
+.sc-icon{font-size:1.6rem;margin-bottom:10px;}
+.sc-name{font-family:var(--fd);font-size:0.9rem;font-weight:700;margin-bottom:4px;}
+.sc-desc{font-size:0.75rem;color:var(--muted);line-height:1.4;}
+.sc-count{
+  margin-top:12px;font-family:var(--fm);font-size:0.65rem;color:var(--muted);
+  display:flex;justify-content:space-between;
+}
+
+/* ── LIVE FEED ── */
+.feed-item{
+  display:flex;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+.feed-item:last-child{border-bottom:none;}
+.feed-avatar{
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:#fff;font-size:0.75rem;flex-shrink:0;
+}
+.feed-body{flex:1;}
+.feed-name{font-weight:600;font-size:0.82rem;}
+.feed-detail{font-size:0.78rem;color:var(--muted);margin-top:2px;line-height:1.4;}
+.feed-time{font-size:0.65rem;color:var(--muted);font-family:var(--fm);margin-top:4px;}
+.feed-emotion{
+  flex-shrink:0;font-family:var(--fm);font-size:0.65rem;
+  padding:2px 8px;border-radius:10px;height:fit-content;margin-top:2px;
+}
+
+/* ── EMOTION BAR CHART ── */
+.emo-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.emo-bar-row:last-child{margin-bottom:0;}
+.emo-label{font-size:0.75rem;min-width:80px;color:var(--text);}
+.emo-track{flex:1;height:8px;background:#f0efe9;border-radius:4px;overflow:hidden;}
+.emo-fill{height:100%;border-radius:4px;transition:width 1s ease;}
+.emo-pct{font-family:var(--fm);font-size:0.7rem;min-width:30px;text-align:right;color:var(--muted);}
+
+/* ── SUBJECT: SCAN TABLE ── */
+.scan-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+.scan-table th{
+  text-align:left;padding:10px 14px;
+  background:var(--tag-bg);border-bottom:1px solid var(--border);
+  font-weight:600;font-size:0.72rem;color:var(--muted);font-family:var(--fm);
+  letter-spacing:0.05em;text-transform:uppercase;
+}
+.scan-table td{padding:12px 14px;border-bottom:1px solid var(--border);}
+.scan-table tr:last-child td{border-bottom:none;}
+.scan-table tr:hover td{background:#fafaf7;}
+.face-thumb{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;border:1px solid var(--border);background:var(--tag-bg);
+}
+
+/* DECISION CHIP */
+.dec-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:6px;
+  font-size:0.72rem;font-weight:600;
+}
+.dec-approved{background:#e3f9ee;color:var(--green);}
+.dec-rejected{background:#ffe5e8;color:var(--red);}
+.dec-flagged{background:#fff3e0;color:var(--warn);}
+.dec-pending{background:var(--tag-bg);color:var(--muted);}
+
+/* ── BIAS REPORT BARS ── */
+.bias-group{margin-bottom:20px;}
+.bias-group-title{font-weight:600;font-size:0.82rem;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.bias-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.bias-demo{font-size:0.75rem;min-width:130px;color:var(--muted);}
+.bias-track{flex:1;height:10px;background:#f0efe9;border-radius:5px;overflow:hidden;position:relative;}
+.bias-fill{height:100%;border-radius:5px;}
+.bias-num{font-family:var(--fm);font-size:0.72rem;min-width:36px;text-align:right;}
+.bias-alert-box{
+  background:#fff5f5;border:1px solid #ffd0d0;border-radius:8px;padding:14px 16px;
+  margin-bottom:12px;display:flex;gap:12px;align-items:flex-start;
+}
+.bias-alert-icon{font-size:1.2rem;flex-shrink:0;}
+.bias-alert-text{font-size:0.8rem;line-height:1.5;color:#c0392b;}
+.bias-alert-text strong{color:var(--red);}
+
+/* ── CASE FILE ── */
+.case-file{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;margin-bottom:14px;
+}
+.case-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;
+}
+.case-header:hover{background:#fafaf7;}
+.case-id{font-family:var(--fm);font-size:0.7rem;color:var(--muted);}
+.case-name{font-weight:600;font-size:0.88rem;margin-top:2px;}
+.case-body{padding:18px;display:none;}
+.case-body.open{display:block;}
+.case-verdict-row{
+  display:flex;gap:10px;margin-top:14px;
+}
+.verdict-btn{
+  flex:1;padding:9px;border-radius:7px;border:1.5px solid;
+  font-family:var(--ff);font-size:0.78rem;font-weight:600;cursor:pointer;
+  transition:all 0.15s;background:transparent;
+}
+.verdict-btn.override{border-color:var(--red);color:var(--red);}
+.verdict-btn.override:hover, .verdict-btn.override.selected{background:var(--red);color:#fff;}
+.verdict-btn.uphold{border-color:var(--green);color:var(--green);}
+.verdict-btn.uphold:hover, .verdict-btn.uphold.selected{background:var(--green);color:#fff;}
+.verdict-result{
+  margin-top:12px;padding:12px 14px;border-radius:8px;
+  font-size:0.8rem;line-height:1.5;display:none;
+}
+.verdict-result.show{display:block;}
+
+/* ── SETTINGS ── */
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;border-bottom:1px solid var(--border);
+}
+.settings-row:last-child{border-bottom:none;}
+.settings-info .sl{font-weight:500;font-size:0.85rem;}
+.settings-info .sd{font-size:0.75rem;color:var(--muted);margin-top:2px;}
+.toggle{
+  width:40px;height:22px;border-radius:11px;cursor:pointer;
+  position:relative;transition:background 0.2s;flex-shrink:0;border:none;
+}
+.toggle.on{background:var(--accent);}
+.toggle.off{background:#ddd;}
+.toggle::after{
+  content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;
+  top:3px;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on::after{left:21px;}
+.toggle.off::after{left:3px;}
+
+/* ── SCAN SIMULATOR ── */
+.scan-sim{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;
+}
+.scan-sim-header{
+  padding:14px 20px;background:var(--sidebar);color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.scan-sim-title{font-family:var(--fd);font-weight:700;font-size:0.95rem;}
+.scan-sim-body{padding:24px;}
+.scan-subjects-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;
+}
+.scan-subject{
+  border:2px solid var(--border);border-radius:10px;
+  padding:14px 10px;text-align:center;cursor:pointer;
+  transition:all 0.2s;background:var(--bg);
+}
+.scan-subject:hover{border-color:var(--accent2);background:#fff;}
+.scan-subject.scanning{border-color:var(--accent);animation:scanpulse 1s infinite;}
+.scan-subject.done-ok{border-color:var(--green);background:#f0fff8;}
+.scan-subject.done-bad{border-color:var(--red);background:#fff5f5;}
+@keyframes scanpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,69,0,0.3)}50%{box-shadow:0 0 0 8px rgba(255,69,0,0)}}
+.ss-face{font-size:2.2rem;margin-bottom:6px;}
+.ss-name{font-size:0.72rem;font-weight:600;margin-bottom:2px;}
+.ss-demo{font-size:0.65rem;color:var(--muted);}
+.ss-result{font-size:0.68rem;font-family:var(--fm);margin-top:6px;min-height:18px;}
+.scan-log{
+  background:var(--sidebar);border-radius:8px;padding:14px;
+  font-family:var(--fm);font-size:0.72rem;color:rgba(255,255,255,0.7);
+  height:120px;overflow-y:auto;
+}
+.log-line{padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.log-line:last-child{border-bottom:none;}
+.log-ok{color:#2dff8f;}
+.log-warn{color:#ffb800;}
+.log-err{color:#ff4566;}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  z-index:1000;display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:#fff;border-radius:12px;width:540px;max-width:90vw;
+  box-shadow:0 20px 60px rgba(0,0,0,0.2);overflow:hidden;
+  animation:modalIn 0.25s ease;
+}
+@keyframes modalIn{from{transform:scale(0.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-title{font-family:var(--fd);font-weight:700;font-size:1rem;}
+.modal-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);}
+.modal-body{padding:22px;}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+
+/* FORM */
+.form-field{margin-bottom:16px;}
+.form-label{font-size:0.78rem;font-weight:600;margin-bottom:6px;display:block;}
+.form-input{
+  width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:7px;
+  font-family:var(--ff);font-size:0.85rem;color:var(--text);
+  outline:none;transition:border-color 0.15s;background:#fff;
+}
+.form-input:focus{border-color:var(--accent2);}
+.form-select{width:100%;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px;}
+
+/* NOTIFICATION TOAST */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--sidebar);color:#fff;
+  padding:12px 18px;border-radius:8px;
+  font-size:0.82rem;z-index:9999;
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);
+  border-left:3px solid var(--accent);
+  transform:translateY(100px);opacity:0;
+  transition:all 0.3s ease;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* HORIZONTAL RULE */
+hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+/* MINI CHART (CSS only) */
+.mini-chart{display:flex;align-items:flex-end;gap:3px;height:40px;}
+.mc-bar{flex:1;border-radius:2px 2px 0 0;min-width:6px;transition:height 0.5s ease;}
+
+/* ALERT BANNER */
+.alert-banner{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;border-radius:8px;margin-bottom:14px;
+  font-size:0.8rem;
+}
+.alert-banner.red{background:#fff0f0;border:1px solid #ffd0d0;color:var(--red);}
+.alert-banner.warn{background:#fffbf0;border:1px solid #ffe5a0;color:var(--warn);}
+.alert-banner.blue{background:#f0f5ff;border:1px solid #c0d4ff;color:var(--accent2);}
+
+/* TABS */
+.tab-bar{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;gap:4px;}
+.tab{padding:8px 16px;cursor:pointer;font-size:0.82rem;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:16px;}
+
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-text">Emo<span>Scan</span></div>
+    <div class="sb-tagline">AI EMOTION PLATFORM v2.4</div>
+  </div>
+  <div class="sb-section">Platform</div>
+  <div class="sb-item active" onclick="nav('dashboard')" id="nav-dashboard"><span class="ico">▦</span> Dashboard</div>
+  <div class="sb-item" onclick="nav('scanner')" id="nav-scanner"><span class="ico">👁</span> Live Scanner <span class="sb-badge">LIVE</span></div>
+  <div class="sb-item" onclick="nav('subjects')" id="nav-subjects"><span class="ico">👤</span> Subjects</div>
+  <div class="sb-item" onclick="nav('bias')" id="nav-bias"><span class="ico">⚠</span> Bias Report <span class="sb-badge">!</span></div>
+  <div class="sb-section">Ethics</div>
+  <div class="sb-item" onclick="nav('cases')" id="nav-cases"><span class="ico">⚖</span> Case Files</div>
+  <div class="sb-item" onclick="nav('consent')" id="nav-consent"><span class="ico">🔐</span> Consent Mgr</div>
+  <div class="sb-section">System</div>
+  <div class="sb-item" onclick="nav('settings')" id="nav-settings"><span class="ico">⚙</span> Settings</div>
+  <div class="sb-status">
+    <div class="sb-user">
+      <div class="sb-avatar">AR</div>
+      <div>
+        <div class="sb-uname">Arjun Rao</div>
+        <div class="sb-urole">Ethics Auditor</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div> 3 Active Scans</div>
+      <button class="tb-btn" onclick="openModal('report')">📊 Export Report</button>
+      <button class="tb-btn primary" onclick="openModal('newscan')">+ New Scan</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="screen active" id="screen-dashboard">
+      <div class="alert-banner red">
+        <span>🚨</span>
+        <span><strong>Critical Bias Alert:</strong> Emotion accuracy for South Asian faces dropped to 48% this week. Immediate review recommended. <a href="#" onclick="nav('bias')" style="color:var(--red);font-weight:600;">View Bias Report →</a></span>
+      </div>
+
+      <div class="grid4" style="margin-bottom:20px;">
+        <div class="card card-sm">
+          <div class="stat-label">Faces Scanned Today</div>
+          <div class="stat-val">1,284</div>
+          <div class="stat-delta delta-up">↑ +18% vs yesterday</div>
+        </div>
+        <div class="card card-sm">
+          <div class="stat-label">Active Deployments</div>
+          <div class="stat-val">7</div>
+          <div class="stat-delta" style="color:var(--muted);">Schools: 3 · Offices: 4</div>
+        </div>
+        <div class="card card-sm">
+          <div class="stat-label">Decisions Auto-Made</div>
+          <div class="stat-val" style="color:var(--red);">312</div>
+          <div class="stat-delta delta-up">No human review</div>
+        </div>
+        <div class="card card-sm">
+          <div class="stat-label">Consent Violations</div>
+          <div class="stat-val" style="color:var(--warn);">41</div>
+          <div class="stat-delta delta-up">↑ +12 this week</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="subject-row">
+            <div class="subject-card red" onclick="nav('scanner')">
+              <div class="sc-icon">🎥</div>
+              <div class="sc-name">Live Scanner</div>
+              <div class="sc-desc">Real-time face emotion detection across all active deployment zones.</div>
+              <div class="sc-count"><span>3 active now</span><span class="badge badge-red">LIVE</span></div>
+            </div>
+            <div class="subject-card blue" onclick="nav('bias')">
+              <div class="sc-icon">📊</div>
+              <div class="sc-name">Bias Report</div>
+              <div class="sc-desc">Accuracy breakdown by skin tone, gender, age & neurotype.</div>
+              <div class="sc-count"><span>Updated 2h ago</span><span class="badge badge-red">CRITICAL</span></div>
+            </div>
+            <div class="subject-card green" onclick="nav('cases')">
+              <div class="sc-icon">⚖</div>
+              <div class="sc-name">Case Files</div>
+              <div class="sc-desc">Contested decisions awaiting human ethics review & override.</div>
+              <div class="sc-count"><span>8 pending</span><span class="badge badge-warn">ACTION</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Emotion Distribution — Today</div>
+            <div class="card-sub">Across all scanned subjects</div>
+            <div class="emo-bar-row"><span class="emo-label">😊 Happy</span><div class="emo-track"><div class="emo-fill" style="width:34%;background:#00a86b;"></div></div><span class="emo-pct">34%</span></div>
+            <div class="emo-bar-row"><span class="emo-label">😐 Neutral</span><div class="emo-track"><div class="emo-fill" style="width:28%;background:#8a8a9a;"></div></div><span class="emo-pct">28%</span></div>
+            <div class="emo-bar-row"><span class="emo-label">😔 Sad</span><div class="emo-track"><div class="emo-fill" style="width:14%;background:#3b9eff;"></div></div><span class="emo-pct">14%</span></div>
+            <div class="emo-bar-row"><span class="emo-label">😠 Angry</span><div class="emo-track"><div class="emo-fill" style="width:10%;background:#e60026;"></div></div><span class="emo-pct">10%</span></div>
+            <div class="emo-bar-row"><span class="emo-label">😨 Fearful</span><div class="emo-track"><div class="emo-fill" style="width:8%;background:#b97cff;"></div></div><span class="emo-pct">8%</span></div>
+            <div class="emo-bar-row"><span class="emo-label">😮 Surprised</span><div class="emo-track"><div class="emo-fill" style="width:6%;background:#ff8c00;"></div></div><span class="emo-pct">6%</span></div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card" style="flex:1;">
+            <div class="card-title">Live Activity Feed</div>
+            <div class="card-sub">Real-time scan events</div>
+            <div id="live-feed"></div>
+          </div>
+          <div class="card card-sm">
+            <div class="card-title">⚠ Ethics Scorecard</div>
+            <div style="margin-top:12px;">
+              <div class="emo-bar-row"><span class="emo-label" style="min-width:100px;font-size:0.72rem;">Consent rate</span><div class="emo-track"><div class="emo-fill" style="width:61%;background:var(--warn);"></div></div><span class="emo-pct" style="color:var(--warn);">61%</span></div>
+              <div class="emo-bar-row"><span class="emo-label" style="min-width:100px;font-size:0.72rem;">Accuracy (avg)</span><div class="emo-track"><div class="emo-fill" style="width:67%;background:var(--warn);"></div></div><span class="emo-pct" style="color:var(--warn);">67%</span></div>
+              <div class="emo-bar-row"><span class="emo-label" style="min-width:100px;font-size:0.72rem;">Human review</span><div class="emo-track"><div class="emo-fill" style="width:24%;background:var(--red);"></div></div><span class="emo-pct" style="color:var(--red);">24%</span></div>
+              <div class="emo-bar-row"><span class="emo-label" style="min-width:100px;font-size:0.72rem;">Bias parity</span><div class="emo-track"><div class="emo-fill" style="width:48%;background:var(--red);"></div></div><span class="emo-pct" style="color:var(--red);">48%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LIVE SCANNER ── -->
+    <div class="screen" id="screen-scanner">
+      <div class="alert-banner blue">
+        <span>ℹ</span>
+        <span>This simulator shows how real emotion AI systems work in schools and workplaces. Each "subject" below represents a real scenario where this technology is deployed today.</span>
+      </div>
+
+      <div class="scan-sim">
+        <div class="scan-sim-header">
+          <span class="scan-sim-title">🎥 EmoScan Live — Classroom Deployment #3 (Pune)</span>
+          <span class="badge" style="background:rgba(255,69,0,0.2);color:#ff8866;font-family:var(--fm);">● SCANNING</span>
+        </div>
+        <div class="scan-sim-body">
+          <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px;">Click <strong>▶ Run Scan</strong> to simulate the AI scanning each student. Watch what decisions the system makes automatically — no teacher, no parent, no consent.</p>
+          <div class="scan-subjects-grid" id="scan-grid"></div>
+          <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+            <button class="tb-btn primary" onclick="runScan()">▶ Run Scan</button>
+            <button class="tb-btn" onclick="resetScan()">↺ Reset</button>
+            <button class="tb-btn" onclick="nav('bias')" style="margin-left:auto;color:var(--red);border-color:var(--red);">⚠ View Bias Impact</button>
+          </div>
+          <div class="scan-log" id="scan-log">
+            <div class="log-line" style="color:rgba(255,255,255,0.3);">// EmoScan Engine v2.4 — Ready</div>
+            <div class="log-line" style="color:rgba(255,255,255,0.3);">// Click ▶ Run Scan to begin analysis</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;" class="two-col">
+        <div class="card">
+          <div class="card-title">How it works — and why it's broken</div>
+          <div class="card-sub">The technology behind emotion recognition AI</div>
+          <div style="font-size:0.82rem;line-height:1.7;color:var(--muted);">
+            <p style="margin-bottom:10px;">EmoScan uses a <strong style="color:var(--text);">Convolutional Neural Network (CNN)</strong> trained on 1.2 million labeled facial images to classify expressions into 7 categories: happy, sad, angry, fearful, disgusted, surprised, and neutral.</p>
+            <p style="margin-bottom:10px;">The model was trained on <strong style="color:var(--text);">predominantly white, young, neurotypical faces</strong> — meaning it performs significantly worse on everyone else.</p>
+            <p>Critically, it confuses <strong style="color:var(--red);">expression with emotion</strong>. A focused student looks "angry." An autistic student looks "hostile." A shy student looks "disengaged." The system cannot know the difference.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Auto-Generated Decisions</div>
+          <div class="card-sub">Actions triggered without human review</div>
+          <div id="auto-decisions" style="font-size:0.8rem;color:var(--muted);">Run a scan to see automated decisions...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUBJECTS ── -->
+    <div class="screen" id="screen-subjects">
+      <div class="tab-bar">
+        <div class="tab active" onclick="setSubjectTab(0)" id="stab-0">All Subjects</div>
+        <div class="tab" onclick="setSubjectTab(1)" id="stab-1">Flagged</div>
+        <div class="tab" onclick="setSubjectTab(2)" id="stab-2">Appealed</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;">
+        <input class="form-input" style="max-width:260px;" placeholder="Search subjects..." oninput="filterSubjects(this.value)">
+        <select class="form-input form-select" style="max-width:160px;" onchange="filterSubjectEmotion(this.value)">
+          <option value="">All Emotions</option>
+          <option>Happy</option><option>Neutral</option><option>Sad</option>
+          <option>Angry</option><option>Fearful</option>
+        </select>
+        <button class="tb-btn primary" onclick="openModal('addsubject')" style="margin-left:auto;">+ Add Subject</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="scan-table" id="subjects-table">
+          <thead>
+            <tr>
+              <th>Subject</th><th>Detected Emotion</th><th>Confidence</th>
+              <th>Context</th><th>AI Decision</th><th>Ethical Issue</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="subjects-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── BIAS REPORT ── -->
+    <div class="screen" id="screen-bias">
+      <div class="bias-alert-box">
+        <div class="bias-alert-icon">⚠</div>
+        <div class="bias-alert-text">
+          <strong>CRITICAL: Significant accuracy disparities detected.</strong> The model performs up to 34% worse on darker skin tones compared to light skin. This is not a minor technical issue — it means real people are being harmed by incorrect, biased AI decisions in schools, workplaces, and courts.
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Accuracy by Skin Tone (Fitzpatrick Scale)</div>
+            <div class="card-sub">Correct emotion classification rate · Based on 50,000 test images</div>
+            <div class="bias-group">
+              <div class="bias-row"><span class="bias-demo">Type I–II (Very Light)</span><div class="bias-track"><div class="bias-fill" style="width:86%;background:var(--green);"></div></div><span class="bias-num" style="color:var(--green);">86%</span></div>
+              <div class="bias-row"><span class="bias-demo">Type III (Light-Medium)</span><div class="bias-track"><div class="bias-fill" style="width:79%;background:#8bc34a;"></div></div><span class="bias-num" style="color:#8bc34a;">79%</span></div>
+              <div class="bias-row"><span class="bias-demo">Type IV (Medium)</span><div class="bias-track"><div class="bias-fill" style="width:67%;background:var(--warn);"></div></div><span class="bias-num" style="color:var(--warn);">67%</span></div>
+              <div class="bias-row"><span class="bias-demo">Type V (Medium-Dark)</span><div class="bias-track"><div class="bias-fill" style="width:58%;background:#ff6b35;"></div></div><span class="bias-num" style="color:#ff6b35;">58%</span></div>
+              <div class="bias-row"><span class="bias-demo">Type VI (Dark)</span><div class="bias-track"><div class="bias-fill" style="width:52%;background:var(--red);"></div></div><span class="bias-num" style="color:var(--red);">52%</span></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Accuracy by Gender Expression</div>
+            <div class="bias-group">
+              <div class="bias-row"><span class="bias-demo">Masculine-presenting</span><div class="bias-track"><div class="bias-fill" style="width:78%;background:var(--green);"></div></div><span class="bias-num" style="color:var(--green);">78%</span></div>
+              <div class="bias-row"><span class="bias-demo">Feminine-presenting</span><div class="bias-track"><div class="bias-fill" style="width:71%;background:var(--warn);"></div></div><span class="bias-num" style="color:var(--warn);">71%</span></div>
+              <div class="bias-row"><span class="bias-demo">Androgynous</span><div class="bias-track"><div class="bias-fill" style="width:58%;background:var(--red);"></div></div><span class="bias-num" style="color:var(--red);">58%</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Accuracy by Neurotype & Condition</div>
+            <div class="bias-group">
+              <div class="bias-row"><span class="bias-demo">Neurotypical</span><div class="bias-track"><div class="bias-fill" style="width:80%;background:var(--green);"></div></div><span class="bias-num" style="color:var(--green);">80%</span></div>
+              <div class="bias-row"><span class="bias-demo">ADHD</span><div class="bias-track"><div class="bias-fill" style="width:65%;background:var(--warn);"></div></div><span class="bias-num" style="color:var(--warn);">65%</span></div>
+              <div class="bias-row"><span class="bias-demo">Autism Spectrum</span><div class="bias-track"><div class="bias-fill" style="width:41%;background:var(--red);"></div></div><span class="bias-num" style="color:var(--red);">41%</span></div>
+              <div class="bias-row"><span class="bias-demo">PTSD / Anxiety</span><div class="bias-track"><div class="bias-fill" style="width:38%;background:var(--red);"></div></div><span class="bias-num" style="color:var(--red);">38%</span></div>
+              <div class="bias-row"><span class="bias-demo">Facial Paralysis</span><div class="bias-track"><div class="bias-fill" style="width:22%;background:var(--red);"></div></div><span class="bias-num" style="color:var(--red);">22%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card">
+            <div class="card-title">Why does bias happen?</div>
+            <div style="font-size:0.8rem;line-height:1.7;color:var(--muted);">
+              <p style="margin-bottom:10px;"><strong style="color:var(--text);">Training data bias:</strong> Most public emotion datasets (AffectNet, RAF-DB) are 60–70% light-skinned faces, predominantly from Western countries.</p>
+              <p style="margin-bottom:10px;"><strong style="color:var(--text);">Cultural expression differences:</strong> Smiling norms, eye contact, and emotional display rules vary massively across cultures. AI trained on one culture fails on others.</p>
+              <p style="margin-bottom:10px;"><strong style="color:var(--text);">Conflating expression with emotion:</strong> A focused person looks "angry." An introvert looks "disengaged." The model can only see muscle movement — not internal state.</p>
+              <p><strong style="color:var(--text);">No feedback loop:</strong> When the AI is wrong, there's no correction mechanism. Wrong decisions compound over time.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Real-World Impact</div>
+            <div style="font-size:0.8rem;line-height:1.7;color:var(--muted);">
+              <p style="margin-bottom:8px;">📌 <strong style="color:var(--text);">Amazon Rekognition</strong> misidentified 28 US lawmakers as criminals, with higher error for people of color.</p>
+              <p style="margin-bottom:8px;">📌 <strong style="color:var(--text);">HireVue</strong> dropped facial analysis in 2021 after researchers showed it penalized neurodivergent candidates.</p>
+              <p style="margin-bottom:8px;">📌 <strong style="color:var(--text);">MIT/Stanford study (2018)</strong> showed emotion AI was 34% less accurate on darker-skinned women vs light-skinned men.</p>
+              <p>📌 <strong style="color:var(--text);">EU AI Act (2024)</strong> now restricts real-time emotion recognition in schools and workplaces as high-risk AI.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CASE FILES ── -->
+    <div class="screen" id="screen-cases">
+      <div class="alert-banner warn">
+        <span>⚖</span>
+        <span><strong>8 cases awaiting your review.</strong> These are real-world scenarios where the AI made a consequential decision. As ethics auditor, decide: uphold or override?</span>
+      </div>
+
+      <div id="case-list"></div>
+    </div>
+
+    <!-- ── CONSENT MANAGER ── -->
+    <div class="screen" id="screen-consent">
+      <div class="two-col">
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Active Deployments — Consent Status</div>
+            <div class="card-sub">Emotion scanning locations and consent collection rates</div>
+            <table class="scan-table">
+              <thead><tr><th>Location</th><th>Type</th><th>Subjects</th><th>Consent Obtained</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td><strong>DPS School, Pune</strong></td><td><span class="badge badge-blue">School</span></td><td>340 students</td><td><span style="color:var(--red);font-weight:600;">0%</span> — none asked</td><td><span class="badge badge-red">⚠ Violation</span></td></tr>
+                <tr><td><strong>Infosys Office, Bangalore</strong></td><td><span class="badge badge-gray">Workplace</span></td><td>820 employees</td><td><span style="color:var(--warn);font-weight:600;">41%</span> — coerced opt-in</td><td><span class="badge badge-warn">Questionable</span></td></tr>
+                <tr><td><strong>Mumbai City Court #4</strong></td><td><span class="badge badge-red">Legal</span></td><td>~60/day</td><td><span style="color:var(--red);font-weight:600;">0%</span> — mandatory</td><td><span class="badge badge-red">⚠ Illegal (EU)</span></td></tr>
+                <tr><td><strong>Shoppers Stop, Delhi</strong></td><td><span class="badge badge-gray">Retail</span></td><td>2,400/day</td><td><span style="color:var(--warn);font-weight:600;">29%</span> — hidden in ToS</td><td><span class="badge badge-warn">Disputed</span></td></tr>
+                <tr><td><strong>AIIMS Hospital, Delhi</strong></td><td><span class="badge badge-green">Medical</span></td><td>180 patients</td><td><span style="color:var(--green);font-weight:600;">94%</span> — informed consent</td><td><span class="badge badge-green">Compliant</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-title">What is valid consent?</div>
+            <div style="font-size:0.8rem;line-height:1.7;color:var(--muted);">
+              <p style="margin-bottom:8px;"><strong style="color:var(--text);">Informed:</strong> People must know exactly what is being scanned, why, and for how long data is kept.</p>
+              <p style="margin-bottom:8px;"><strong style="color:var(--text);">Voluntary:</strong> "You must agree to be scanned to keep your job" is <em style="color:var(--red);">not voluntary consent.</em></p>
+              <p style="margin-bottom:8px;"><strong style="color:var(--text);">Revocable:</strong> People must be able to withdraw consent at any time without penalty.</p>
+              <p><strong style="color:var(--text);">For minors:</strong> Children cannot legally consent. Parent/guardian consent is required — and even then, experts argue children should never be emotion-scanned in schools.</p>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card">
+            <div class="card-title">Consent Settings</div>
+            <div id="consent-toggles"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Legal Frameworks</div>
+            <div style="font-size:0.8rem;line-height:1.7;color:var(--muted);">
+              <p style="margin-bottom:8px;">🇪🇺 <strong style="color:var(--text);">EU AI Act:</strong> Bans real-time emotion recognition in schools & workplaces except for safety use cases.</p>
+              <p style="margin-bottom:8px;">🇮🇳 <strong style="color:var(--text);">India DPDP Act 2023:</strong> Requires explicit consent for sensitive biometric data including facial expressions.</p>
+              <p>🇺🇸 <strong style="color:var(--text);">Illinois BIPA:</strong> Companies fined $1,000–$5,000 per person per violation for unconsented biometric collection.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="screen" id="screen-settings">
+      <div class="two-col">
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">AI Model Configuration</div>
+            <div class="card-sub">Active model: EmoNet-v2.4 · Training data: AffectNet + RAF-DB</div>
+            <div id="model-settings"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Notification & Alert Rules</div>
+            <div id="notif-settings"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Model Transparency</div>
+            <div style="font-size:0.8rem;line-height:1.7;color:var(--muted);margin-bottom:12px;">
+              This model is classified as <span class="badge badge-red">HIGH RISK</span> under EU AI Act Article 6. Required documentation:
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:0.8rem;">
+              <div style="display:flex;justify-content:space-between;"><span>Training data card</span><span class="badge badge-green">✓ Filed</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Bias impact assessment</span><span class="badge badge-warn">Pending</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Fundamental rights review</span><span class="badge badge-red">Missing</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Human oversight protocol</span><span class="badge badge-red">Missing</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Accuracy benchmarks</span><span class="badge badge-green">✓ Filed</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>Opt-out mechanism</span><span class="badge badge-red">Missing</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Danger Zone</div>
+            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">These actions are irreversible and affect all active deployments.</div>
+            <button class="tb-btn" style="width:100%;margin-bottom:8px;color:var(--warn);border-color:var(--warn);" onclick="showToast('⚠ All scans paused. Human review required for pending decisions.')">⏸ Pause All Active Scans</button>
+            <button class="tb-btn" style="width:100%;color:var(--red);border-color:var(--red);" onclick="showToast('🔴 Emergency shutdown initiated. All deployments halted.')">🔴 Emergency Shutdown</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-newscan">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">+ New Scan Session</div><button class="modal-close" onclick="closeModal('newscan')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-field"><label class="form-label">Deployment Location</label><input class="form-input" placeholder="e.g. Classroom 4B, Pune"></div>
+      <div class="form-field"><label class="form-label">Scan Purpose</label>
+        <select class="form-input form-select"><option>Engagement Monitoring</option><option>Security</option><option>Hiring Assessment</option><option>Medical</option><option>Research</option></select>
+      </div>
+      <div class="form-field"><label class="form-label">Consent Status</label>
+        <select class="form-input form-select"><option>Informed consent obtained</option><option>Implied consent</option><option>No consent (mandatory)</option></select>
+      </div>
+      <div class="form-field"><label class="form-label">Auto-decisions enabled?</label>
+        <select class="form-input form-select"><option>No — human review required</option><option>Yes — auto-flag only</option><option>Yes — auto-decide</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeModal('newscan')">Cancel</button>
+      <button class="tb-btn primary" onclick="closeModal('newscan');showToast('✓ New scan session created')">Create Session</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-report">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">📊 Export Ethics Report</div><button class="modal-close" onclick="closeModal('report')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-field"><label class="form-label">Report Type</label>
+        <select class="form-input form-select"><option>Full Bias Audit</option><option>Consent Compliance</option><option>Decision Log</option><option>EU AI Act Checklist</option></select>
+      </div>
+      <div class="form-field"><label class="form-label">Date Range</label><input class="form-input" type="date"></div>
+      <div class="form-field"><label class="form-label">Format</label>
+        <select class="form-input form-select"><option>PDF</option><option>CSV</option><option>JSON</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeModal('report')">Cancel</button>
+      <button class="tb-btn primary" onclick="closeModal('report');showToast('📄 Report exported successfully')">Export</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-addsubject">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">+ Add Subject</div><button class="modal-close" onclick="closeModal('addsubject')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-field"><label class="form-label">Subject ID / Name</label><input class="form-input" placeholder="e.g. STU-0421 or Rahul M."></div>
+      <div class="form-field"><label class="form-label">Context</label>
+        <select class="form-input form-select"><option>Student</option><option>Employee</option><option>Job Applicant</option><option>Patient</option><option>Defendant</option></select>
+      </div>
+      <div class="form-field"><label class="form-label">Consent Status</label>
+        <select class="form-input form-select"><option>Consented</option><option>Not consented</option><option>Minor — guardian consent</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeModal('addsubject')">Cancel</button>
+      <button class="tb-btn primary" onclick="closeModal('addsubject');showToast('✓ Subject added to system')">Add Subject</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── NAV ──
+const TITLES = {dashboard:'Dashboard',scanner:'Live Scanner',subjects:'Subjects',bias:'Bias Report',cases:'Case Files',consent:'Consent Manager',settings:'Settings'};
+function nav(id) {
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('nav-'+id)?.classList.add('active');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id)?.classList.add('active');
+  document.getElementById('topbar-title').textContent = TITLES[id]||id;
+}
+
+// ── MODAL ──
+function openModal(id){document.getElementById('modal-'+id).classList.add('open');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ── TOAST ──
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── LIVE FEED ──
+const FEED_DATA = [
+  {name:'Priya S.',demo:'Student · F12',emotion:'Neutral',decision:'FLAGGED: Low Engagement',dec:'flagged',color:'#e67e22',bg:'#e67e22'},
+  {name:'Aditya K.',demo:'Employee · M28',emotion:'Fearful',decision:'REJECTED: Unstable',dec:'rejected',color:'#e60026',bg:'#c0392b'},
+  {name:'Meena R.',demo:'Applicant · F35',emotion:'Happy',decision:'APPROVED',dec:'approved',color:'#00a86b',bg:'#27ae60'},
+  {name:'Rohit P.',demo:'Student · M14',emotion:'Angry',decision:'BEHAVIOR FLAG',dec:'flagged',color:'#e67e22',bg:'#e67e22'},
+  {name:'Sunita D.',demo:'Employee · F42',emotion:'Neutral',decision:'REJECTED: Cold',dec:'rejected',color:'#e60026',bg:'#c0392b'},
+  {name:'Aryan T.',demo:'Defendant · M31',emotion:'Fearful',decision:'HIGH RISK',dec:'flagged',color:'#e67e22',bg:'#e67e22'},
+];
+const TIMES = ['just now','1m ago','3m ago','7m ago','12m ago','18m ago'];
+function initFeed() {
+  const feed = document.getElementById('live-feed');
+  if(!feed) return;
+  feed.innerHTML = FEED_DATA.map((f,i)=>`
+    <div class="feed-item">
+      <div class="feed-avatar" style="background:${f.bg}">${f.name.split(' ').map(w=>w[0]).join('')}</div>
+      <div class="feed-body">
+        <div class="feed-name">${f.name} <span style="font-weight:400;color:var(--muted);font-size:0.75rem;">${f.demo}</span></div>
+        <div class="feed-detail">AI Decision: <strong style="color:${f.color}">${f.decision}</strong></div>
+        <div class="feed-time">${TIMES[i]}</div>
+      </div>
+      <div class="feed-emotion badge ${f.dec==='approved'?'badge-green':f.dec==='rejected'?'badge-red':'badge-warn'}">${f.emotion}</div>
+    </div>
+  `).join('');
+}
+
+// ── SUBJECTS TABLE ──
+const SUBJECTS = [
+  {face:'😐',name:'Priya S.',id:'STU-0341',demo:'Student, F, 12',emotion:'Neutral',conf:72,context:'Online class',decision:'FLAGGED',issue:'Deep focus misread as disengagement',issueClass:'warn'},
+  {face:'😠',name:'Aditya K.',id:'EMP-1204',demo:'Employee, M, 28',emotion:'Angry',conf:81,context:'Monday meeting',decision:'REJECTED',issue:'Concentration misread as hostility; autistic',issueClass:'red'},
+  {face:'😊',name:'Meena R.',id:'APP-5521',demo:'Applicant, F, 35',emotion:'Happy',conf:91,context:'Video interview',decision:'APPROVED',issue:'None flagged — but decision was automated',issueClass:'warn'},
+  {face:'😨',name:'Sunita D.',id:'EMP-0887',demo:'Employee, F, 42',emotion:'Fearful',conf:68,context:'Performance review',decision:'REJECTED',issue:'Anxiety disorder misread; never disclosed',issueClass:'red'},
+  {face:'😮',name:'Rohit P.',id:'STU-0198',demo:'Student, M, 14',emotion:'Surprised',conf:75,context:'Surprise quiz',decision:'FLAGGED',issue:'"Distracted" flag; just surprised by question',issueClass:'warn'},
+  {face:'😔',name:'Aryan T.',id:'DEF-0091',demo:'Defendant, M, 31',emotion:'Sad',conf:88,context:'Court hearing',decision:'APPROVED',issue:'Sadness = remorse. Risky inference for justice',issueClass:'warn'},
+  {face:'😐',name:'Kavya M.',id:'PAT-3301',demo:'Patient, F, 67',emotion:'Neutral',conf:55,context:'Pain assessment',decision:'REJECTED',issue:'Chronic pain patients have suppressed expressions',issueClass:'red'},
+  {face:'😔',name:'Sameer H.',id:'APP-7720',demo:'Applicant, M, 24',emotion:'Sad',conf:79,context:'Job interview',decision:'REJECTED',issue:'Dark-skinned; accuracy only 52% for skin type V',issueClass:'red'},
+];
+let subjectFilter = '';
+let emotionFilter = '';
+function renderSubjects() {
+  const tbody = document.getElementById('subjects-tbody');
+  if(!tbody) return;
+  const filtered = SUBJECTS.filter(s=>{
+    const matchText = !subjectFilter || s.name.toLowerCase().includes(subjectFilter.toLowerCase());
+    const matchEmo = !emotionFilter || s.emotion === emotionFilter;
+    return matchText && matchEmo;
+  });
+  tbody.innerHTML = filtered.map(s=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:10px;">
+        <div class="face-thumb">${s.face}</div>
+        <div><div style="font-weight:600">${s.name}</div><div style="font-size:0.7rem;color:var(--muted);font-family:var(--fm);">${s.id} · ${s.demo}</div></div>
+      </div></td>
+      <td><span class="badge ${s.emotion==='Happy'?'badge-green':s.emotion==='Angry'||s.emotion==='Fearful'?'badge-red':'badge-gray'}">${s.emotion}</span></td>
+      <td><span style="font-family:var(--fm);font-size:0.8rem;">${s.conf}%</span></td>
+      <td style="font-size:0.78rem;color:var(--muted);">${s.context}</td>
+      <td><span class="dec-chip ${s.decision==='APPROVED'?'dec-approved':s.decision==='REJECTED'?'dec-rejected':'dec-flagged'}">${s.decision==='APPROVED'?'✓':s.decision==='REJECTED'?'✕':'⚑'} ${s.decision}</span></td>
+      <td style="font-size:0.75rem;color:var(--${s.issueClass==='red'?'red':s.issueClass==='warn'?'warn':'green'});max-width:200px;">${s.issue}</td>
+      <td><button class="tb-btn" style="font-size:0.7rem;padding:4px 10px;" onclick="showToast('Case opened for ${s.name}')">Review</button></td>
+    </tr>
+  `).join('');
+}
+function filterSubjects(v){subjectFilter=v;renderSubjects();}
+function filterSubjectEmotion(v){emotionFilter=v;renderSubjects();}
+function setSubjectTab(i){
+  document.querySelectorAll('[id^=stab-]').forEach((t,j)=>t.classList.toggle('active',i===j));
+}
+
+// ── SCANNER SIMULATION ──
+const SCAN_SUBJECTS = [
+  {face:'😐',name:'Priya S.',demo:'Girl, 12',skin:'Type V',result:null,correct:'Neutral/focused',ai:'ANGRY',bad:true},
+  {face:'😊',name:'Arjun M.',demo:'Boy, 14',skin:'Type II',result:null,correct:'Happy',ai:'HAPPY',bad:false},
+  {face:'😑',name:'Rahul T.',demo:'Boy, 16, Autistic',skin:'Type IV',result:null,correct:'Neutral (autism)',ai:'HOSTILE',bad:true},
+  {face:'😔',name:'Sneha K.',demo:'Girl, 13',skin:'Type V',result:null,correct:'Tired',ai:'DEPRESSED',bad:true},
+  {face:'😊',name:'Oliver J.',demo:'Boy, 15',skin:'Type I',result:null,correct:'Happy',ai:'HAPPY',bad:false},
+  {face:'🙂',name:'Fatima A.',demo:'Girl, 14',skin:'Type VI',result:null,correct:'Content',ai:'CONFUSED',bad:true},
+  {face:'😮',name:'Dev R.',demo:'Boy, 12',skin:'Type III',result:null,correct:'Surprised',ai:'SURPRISED',bad:false},
+  {face:'😐',name:'Aisha N.',demo:'Girl, 15',skin:'Type VI',result:null,correct:'Focused',ai:'DISENGAGED',bad:true},
+];
+let scanRunning = false;
+function initScanGrid() {
+  const grid = document.getElementById('scan-grid');
+  if(!grid) return;
+  grid.innerHTML = SCAN_SUBJECTS.map((s,i)=>`
+    <div class="scan-subject" id="ss-${i}">
+      <div class="ss-face">${s.face}</div>
+      <div class="ss-name">${s.name}</div>
+      <div class="ss-demo">${s.demo}</div>
+      <div class="ss-demo">${s.skin}</div>
+      <div class="ss-result" id="ssr-${i}"></div>
+    </div>
+  `).join('');
+}
+function resetScan() {
+  scanRunning = false;
+  SCAN_SUBJECTS.forEach(s=>s.result=null);
+  initScanGrid();
+  document.getElementById('scan-log').innerHTML = `<div class="log-line" style="color:rgba(255,255,255,0.3);">// EmoScan Engine v2.4 — Ready</div><div class="log-line" style="color:rgba(255,255,255,0.3);">// Click ▶ Run Scan to begin analysis</div>`;
+  document.getElementById('auto-decisions').innerHTML = 'Run a scan to see automated decisions...';
+}
+async function runScan() {
+  if(scanRunning) return;
+  scanRunning = true;
+  const log = document.getElementById('scan-log');
+  const decisions = document.getElementById('auto-decisions');
+  addLog(log,'[INIT] Connecting to EmoScan Engine...','');
+  await sleep(400);
+  addLog(log,'[INIT] Camera feed established — 8 faces detected','log-ok');
+  await sleep(400);
+  addLog(log,'[SCAN] Running CNN inference on each face...','');
+  let decisionList = [];
+  for(let i=0;i<SCAN_SUBJECTS.length;i++){
+    const s = SCAN_SUBJECTS[i];
+    const card = document.getElementById('ss-'+i);
+    const res = document.getElementById('ssr-'+i);
+    card.classList.add('scanning');
+    await sleep(500 + Math.random()*300);
+    card.classList.remove('scanning');
+    if(s.bad) {
+      card.classList.add('done-bad');
+      res.innerHTML = `<span style="color:var(--red)">${s.ai}</span>`;
+      addLog(log,`[${s.name}] Detected: ${s.ai} (Reality: ${s.correct})`,'log-err');
+      const dec = getDecision(s.ai);
+      decisionList.push({name:s.name,ai:s.ai,dec:dec.text,cls:dec.cls});
+    } else {
+      card.classList.add('done-ok');
+      res.innerHTML = `<span style="color:var(--green)">${s.ai}</span>`;
+      addLog(log,`[${s.name}] Detected: ${s.ai} ✓`,'log-ok');
+    }
+  }
+  await sleep(300);
+  addLog(log,'[DONE] Scan complete. Generating automated decisions...','log-warn');
+  await sleep(500);
+  addLog(log,`[AUTO] ${decisionList.length} automated actions triggered — NO human review`,'log-err');
+
+  decisions.innerHTML = decisionList.map(d=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-weight:600;font-size:0.82rem;">${d.name}</div>
+        <div style="font-size:0.75rem;color:var(--muted);">Detected: <strong>${d.ai}</strong></div>
+      </div>
+      <span class="dec-chip ${d.cls}">${d.dec}</span>
+    </div>
+  `).join('') + `<div style="margin-top:12px;padding:10px;background:#fff5f5;border-radius:6px;font-size:0.78rem;color:var(--red);">⚠ ${decisionList.length} students affected. None were told. No appeal process exists.</div>`;
+  scanRunning = false;
+}
+function getDecision(ai){
+  const map = {
+    'ANGRY':{text:'⚑ BEHAVIOR FLAG',cls:'dec-flagged'},
+    'HOSTILE':{text:'✕ ESCALATED',cls:'dec-rejected'},
+    'DEPRESSED':{text:'⚑ COUNSELOR ALERT',cls:'dec-flagged'},
+    'CONFUSED':{text:'⚑ ENGAGEMENT LOW',cls:'dec-flagged'},
+    'DISENGAGED':{text:'✕ PARENT NOTIFIED',cls:'dec-rejected'},
+  };
+  return map[ai]||{text:'⚑ FLAGGED',cls:'dec-flagged'};
+}
+function addLog(el,text,cls) {
+  const line = document.createElement('div');
+  line.className = 'log-line '+cls;
+  line.textContent = text;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ── CASE FILES ──
+const CASES = [
+  {id:'CASE-001',name:'Aditya K. — Job Rejection',badge:'badge-red',
+   desc:'EmoScan detected "Anger" (81% confidence) during a video interview. The system auto-rejected Aditya\'s application. He was never informed of the reason. Aditya later disclosed he is autistic — his neutral expression was misread as hostile.',
+   aiDecision:'Application auto-rejected. Candidate blacklisted.',
+   shouldOverride:true,
+   overrideWhy:'This is a textbook case of disability discrimination. Autism creates atypical facial expressions that the model was never trained on. Auto-rejection without human review violates India\'s Rights of Persons with Disabilities Act 2016.',
+   upholdWhy:'Upholding this decision is wrong. The AI made a provably incorrect reading and destroyed a person\'s career opportunity without any recourse.'},
+  {id:'CASE-002',name:'Priya S. — Student Behavior Record',badge:'badge-warn',
+   desc:'A 12-year-old student in an online class was flagged for "Anger" and "Disengagement." A behavior incident was automatically added to her permanent school record. Her parents were not informed. Priya was actually concentrating deeply.',
+   aiDecision:'Behavior incident filed. Engagement score: F. Parents to be notified.',
+   shouldOverride:true,
+   overrideWhy:'A child cannot consent to biometric scanning. Creating a permanent behavior record from a flawed AI inference violates POCSO data protection principles and causes long-term harm to a minor.',
+   upholdWhy:'Upholding permanently marks an innocent child. The AI was demonstrably wrong — focus and anger look identical to this model.'},
+  {id:'CASE-003',name:'Kavya M. — Pain Under-Assessment',badge:'badge-red',
+   desc:'EmoScan assessed a 67-year-old chronic pain patient as showing "Neutral" emotion, leading staff to rate her pain at 2/10. She reported 8/10. Elderly patients with chronic pain have suppressed facial expressions. She was under-medicated.',
+   aiDecision:'Pain level: 2/10. Standard medication prescribed.',
+   shouldOverride:true,
+   overrideWhy:'A system that systematically under-detects pain in elderly patients causes real medical harm. The AI\'s training data skewed young. This patient was under-treated based on a flawed reading.',
+   upholdWhy:'Upholding this is dangerous. Medical decisions require clinical assessment, not emotion AI. The patient\'s self-report of 8/10 must take precedence.'},
+  {id:'CASE-004',name:'Aryan T. — Parole Hearing',badge:'badge-red',
+   desc:'During a parole hearing, Aryan showed a "Neutral" expression which the AI flagged as "lack of remorse." The judge was shown this analysis. Parole was denied. Aryan had served his full minimum term and had no prior violations.',
+   aiDecision:'Emotional analysis: Neutral. Risk flag: Low remorse. Recommendation: Deny parole.',
+   shouldOverride:true,
+   overrideWhy:'Using emotion AI in legal proceedings is not scientifically validated. There is no peer-reviewed evidence that microexpressions predict recidivism. This could constitute a violation of the right to a fair trial.',
+   upholdWhy:'Upholding this denies freedom based on junk science. A person\'s liberty cannot be determined by an algorithm.'},
+];
+function initCases() {
+  const list = document.getElementById('case-list');
+  if(!list) return;
+  list.innerHTML = CASES.map(c=>`
+    <div class="case-file">
+      <div class="case-header" onclick="toggleCase('${c.id}')">
+        <div>
+          <div class="case-id">${c.id}</div>
+          <div class="case-name">${c.name}</div>
+        </div>
+        <span class="badge ${c.badge}">Pending Review</span>
+      </div>
+      <div class="case-body" id="cb-${c.id}">
+        <p style="font-size:0.82rem;line-height:1.6;color:var(--muted);margin-bottom:12px;">${c.desc}</p>
+        <div style="background:var(--tag-bg);border-radius:7px;padding:10px 14px;font-size:0.8rem;margin-bottom:4px;">
+          <span style="color:var(--muted);">AI Decision: </span><strong style="color:var(--red);">${c.aiDecision}</strong>
+        </div>
+        <div class="case-verdict-row">
+          <button class="verdict-btn override" id="v-${c.id}-override" onclick="selectVerdict('${c.id}','override')">⚡ Override AI Decision</button>
+          <button class="verdict-btn uphold" id="v-${c.id}-uphold" onclick="selectVerdict('${c.id}','uphold')">✓ Uphold AI Decision</button>
+        </div>
+        <div class="verdict-result" id="vr-${c.id}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+function toggleCase(id) {
+  const body = document.getElementById('cb-'+id);
+  body.classList.toggle('open');
+}
+function selectVerdict(id, choice) {
+  const c = CASES.find(x=>x.id===id);
+  document.getElementById('v-'+id+'-override').classList.toggle('selected', choice==='override');
+  document.getElementById('v-'+id+'-uphold').classList.toggle('selected', choice==='uphold');
+  const res = document.getElementById('vr-'+id);
+  const correct = choice==='override'===c.shouldOverride;
+  res.style.display='block';
+  res.style.background = correct ? '#f0fff8' : '#fff5f5';
+  res.style.border = `1px solid ${correct ? '#a0f0c0' : '#ffd0d0'}`;
+  res.style.borderRadius = '8px';
+  res.style.padding = '12px 14px';
+  res.innerHTML = `<div style="font-weight:700;font-size:0.82rem;color:${correct?'var(--green)':'var(--red)'};margin-bottom:6px;">${correct ? '✓ Correct — Good Ethics Judgment' : '⚠ Reconsidering this?'}</div>
+  <div style="font-size:0.8rem;line-height:1.5;color:var(--muted);">${choice==='override' ? c.overrideWhy : c.upholdWhy}</div>`;
+  showToast(correct ? '✓ Well judged — ethics upheld' : '⚠ Consider reconsidering this verdict');
+}
+
+// ── CONSENT TOGGLES ──
+const CONSENT_SETTINGS = [
+  {label:'Require explicit consent before scanning',desc:'Mandatory opt-in for every new subject',on:false},
+  {label:'Parental consent for minors',desc:'Block scanning of anyone under 18 without guardian approval',on:false},
+  {label:'Right to know they\'re being scanned',desc:'Display notification banner in scan locations',on:false},
+  {label:'Opt-out mechanism',desc:'Allow any subject to withdraw from scanning at any time',on:false},
+  {label:'Auto-decision requires human review',desc:'No AI decision takes effect without an ethics officer sign-off',on:false},
+  {label:'Data deletion on request',desc:'Remove all scan data within 48h of subject request',on:true},
+];
+function initConsentToggles() {
+  const el = document.getElementById('consent-toggles');
+  if(!el) return;
+  el.innerHTML = CONSENT_SETTINGS.map((s,i)=>`
+    <div class="settings-row">
+      <div class="settings-info">
+        <div class="sl">${s.label}</div>
+        <div class="sd">${s.desc}</div>
+      </div>
+      <button class="toggle ${s.on?'on':'off'}" id="ct-${i}" onclick="toggleConsent(${i})"></button>
+    </div>
+  `).join('');
+}
+function toggleConsent(i) {
+  CONSENT_SETTINGS[i].on = !CONSENT_SETTINGS[i].on;
+  const btn = document.getElementById('ct-'+i);
+  btn.className = 'toggle ' + (CONSENT_SETTINGS[i].on?'on':'off');
+  showToast(CONSENT_SETTINGS[i].on ? '✓ Setting enabled' : '⚠ Setting disabled');
+}
+
+// ── MODEL SETTINGS ──
+const MODEL_SETTINGS = [
+  {label:'Auto-decisions enabled',desc:'AI makes binding decisions without human review',on:true},
+  {label:'High-confidence threshold (>85%)',desc:'Only apply decisions when confidence is above 85%',on:false},
+  {label:'Flag for human review when <70%',desc:'Route uncertain predictions to ethics officer queue',on:false},
+  {label:'Disable scanning for skin types V–VI',desc:'Halt scanning where accuracy is below 60% — prevents harm',on:false},
+  {label:'Explainability mode',desc:'Log which facial features triggered each prediction',on:false},
+];
+function initModelSettings() {
+  const el = document.getElementById('model-settings');
+  if(!el) return;
+  el.innerHTML = MODEL_SETTINGS.map((s,i)=>`
+    <div class="settings-row">
+      <div class="settings-info">
+        <div class="sl">${s.label}</div>
+        <div class="sd">${s.desc}</div>
+      </div>
+      <button class="toggle ${s.on?'on':'off'}" id="ms-${i}" onclick="toggleModel(${i})"></button>
+    </div>
+  `).join('');
+}
+function toggleModel(i) {
+  MODEL_SETTINGS[i].on = !MODEL_SETTINGS[i].on;
+  document.getElementById('ms-'+i).className = 'toggle ' + (MODEL_SETTINGS[i].on?'on':'off');
+  showToast(MODEL_SETTINGS[i].on ? '✓ Setting enabled' : '⚠ Setting disabled');
+}
+const NOTIF_SETTINGS = [
+  {label:'Alert on accuracy drop below 60%',desc:'Email ethics officer when bias metrics worsen',on:true},
+  {label:'Notify subjects of decisions made about them',desc:'Send automated notification to scanned subjects',on:false},
+  {label:'Weekly bias audit digest',desc:'Auto-generate bias report every Monday',on:true},
+];
+function initNotifSettings() {
+  const el = document.getElementById('notif-settings');
+  if(!el) return;
+  el.innerHTML = NOTIF_SETTINGS.map((s,i)=>`
+    <div class="settings-row">
+      <div class="settings-info">
+        <div class="sl">${s.label}</div>
+        <div class="sd">${s.desc}</div>
+      </div>
+      <button class="toggle ${s.on?'on':'off'}" id="ns-${i}" onclick="toggleNotif(${i})"></button>
+    </div>
+  `).join('');
+}
+function toggleNotif(i) {
+  NOTIF_SETTINGS[i].on = !NOTIF_SETTINGS[i].on;
+  document.getElementById('ns-'+i).className = 'toggle ' + (NOTIF_SETTINGS[i].on?'on':'off');
+  showToast(NOTIF_SETTINGS[i].on ? '✓ Setting enabled' : '⚠ Setting disabled');
+}
+
+// ── INIT ──
+initFeed();
+renderSubjects();
+initScanGrid();
+initCases();
+initConsentToggles();
+initModelSettings();
+initNotifSettings();
+
+// Animate live feed periodically
+let feedIdx = 0;
+setInterval(()=>{
+  feedIdx = (feedIdx+1) % FEED_DATA.length;
+  // just shimmer to show "live"
+}, 5000);
+</script>
+</body>
+</html>
